@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Influência das Drogas Ilícitas | Mapa Interativo</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "Arial", "sans-serif"],
+                        serif: ["Georgia", "Times New Roman", "serif"]
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: #eef7fb;
+            color: #24343b;
+            font-family: Inter, Arial, sans-serif;
+        }
+
+        .paper {
+            background: #ffffff;
+        }
+
+        .map {
+            position: relative;
+            width: min(720px, 94vw);
+            aspect-ratio: 1 / 1;
+            margin: auto;
+        }
+
+        .map-lines {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .map-lines line {
+            stroke: #a9c8d5;
+            stroke-width: 0.45;
+        }
+
+        .map-lines line.active {
+            stroke: #397d99;
+            stroke-width: 0.8;
+        }
+
+        .center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+
+            width: 31%;
+            aspect-ratio: 1;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+
+            border-radius: 50%;
+
+            background: #24566b;
+            color: #fff;
+
+            box-shadow: 0 10px 35px rgba(36, 86, 107, .16);
+
+            z-index: 5;
+        }
+
+        .node {
+            position: absolute;
+
+            transform: translate(-50%, -50%);
+
+            width: 18%;
+            aspect-ratio: 1;
+
+            border-radius: 50%;
+
+            border: 1px solid #c5dce5;
+
+            background: #ffffff;
+
+            color: #29434e;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            text-align: center;
+
+            padding: 8px;
+
+            cursor: pointer;
+
+            transition:
+                transform .2s ease,
+                background .2s ease,
+                color .2s ease,
+                box-shadow .2s ease,
+                border-color .2s ease;
+        }
+
+        .node:hover {
+            transform: translate(-50%, -50%) scale(1.06);
+            background: #e3f2f7;
+            border-color: #8fb8c8;
+        }
+
+        .node.active {
+            background: #397d99;
+            color: #fff;
+            border-color: #397d99;
+            box-shadow: 0 7px 20px rgba(57, 125, 153, .18);
+        }
+
+        .node-number {
+            font-family: Georgia, serif;
+            font-size: .7rem;
+            color: #7295a3;
+            margin-bottom: 4px;
+        }
+
+        .node.active .node-number {
+            color: #d5eaf1;
+        }
+
+        .info-card {
+            background: #ffffff;
+            border: 1px solid #c9dfe7;
+            box-shadow: 0 8px 30px rgba(46, 91, 108, .08);
+        }
+
+        .answer {
+            width: 100%;
+            text-align: left;
+
+            border: 1px solid #c9dfe7;
+            background: #ffffff;
+
+            padding: 15px 16px;
+            border-radius: 10px;
+
+            transition:
+                background .15s ease,
+                border-color .15s ease,
+                transform .15s ease;
+        }
+
+        .answer:hover {
+            background: #e8f5f9;
+            border-color: #91b9c8;
+            transform: translateY(-1px);
+        }
+
+        .answer.correct {
+            background: #e1f0e9;
+            border-color: #9abca9;
+        }
+
+        .answer.wrong {
+            background: #f2e8e6;
+            border-color: #c7aaa4;
+        }
+
+        .fade {
+            animation: fade .3s ease;
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .map {
+                width: 100%;
+                aspect-ratio: .92;
+            }
+
+            .center {
+                width: 29%;
+            }
+
+            .node {
+                width: 22%;
+                font-size: .67rem;
+            }
+
+            .node-number {
+                font-size: .6rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- CABEÇALHO -->
+
+    <header class="border-b border-[#c9dfe7] bg-[#ffffff]">
+
+        <div class="max-w-5xl mx-auto px-6 py-8 sm:py-12">
+
+            <div class="max-w-3xl">
+
+                <p class="text-xs uppercase tracking-[.22em] text-[#5f8493] mb-4">
+                    Projeto de conscientização
+                </p>
+
+                <h1 class="font-serif text-4xl sm:text-6xl leading-tight text-[#244552]">
+                    Influência das<br class="hidden sm:block">
+                    drogas ilícitas
+                </h1>
+
+                <p class="mt-5 text-base sm:text-lg leading-7 text-[#607984] max-w-2xl">
+                    Uma experiência interativa para entender como diferentes
+                    fatores podem influenciar situações relacionadas ao uso
+                    de drogas e à prevenção.
+                </p>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main>
+
+        <!-- INTRODUÇÃO -->
+
+        <section class="max-w-5xl mx-auto px-6 py-12">
+
+            <div class="grid md:grid-cols-[1fr_280px] gap-10 items-start">
+
+                <div>
+
+                    <p class="font-serif text-2xl sm:text-3xl leading-relaxed text-[#294b59]">
+                        O problema não começa e termina em uma única causa.
+                    </p>
+
+                    <p class="mt-5 leading-7 text-[#607984] max-w-2xl">
+                        Família, amizades, escola, ambiente social, informação
+                        e acesso a apoio podem fazer parte de diferentes
+                        situações. Explore o mapa e descubra como esses fatores
+                        se relacionam.
+                    </p>
+
+                </div>
+
+                <div class="border-l-2 border-[#8fb8c8] pl-5">
+
+                    <p class="text-xs uppercase tracking-[.18em] text-[#5f8493]">
+                        Como participar
+                    </p>
+
+                    <p class="mt-3 text-sm leading-6 text-[#607984]">
+                        Clique nos pontos do mapa. Cada ponto revela uma
+                        informação e adiciona uma pista à sua investigação.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- MAPA -->
+
+        <section class="bg-[#dceff5] border-y border-[#c5dce5] py-10 sm:py-14">
+
+            <div class="max-w-5xl mx-auto px-4">
+
+                <div class="text-center mb-8">
+
+                    <p class="text-xs uppercase tracking-[.2em] text-[#5f8493]">
+                        Mapa de fatores
+                    </p>
+
+                    <h2 class="font-serif text-3xl sm:text-4xl mt-2 text-[#294b59]">
+                        Encontre as conexões
+                    </h2>
+
+                </div>
+
+
+                <div class="map">
+
+                    <svg
+                        class="map-lines"
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                    >
+
+                        <line id="line-family"
+                              x1="50" y1="50"
+                              x2="50" y2="8"/>
+
+                        <line id="line-friends"
+                              x1="50" y1="50"
+                              x2="87" y2="22"/>
+
+                        <line id="line-mental"
+                              x1="50" y1="50"
+                              x2="91" y2="51"/>
+
+                        <line id="line-social"
+                              x1="50" y1="50"
+                              x2="78" y2="83"/>
+
+                        <line id="line-school"
+                              x1="50" y1="50"
+                              x2="22" y2="83"/>
+
+                        <line id="line-info"
+                              x1="50" y1="50"
+                              x2="9" y2="51"/>
+
+                        <line id="line-vulnerability"
+                              x1="50" y1="50"
+                              x2="13" y2="22"/>
+
+                        <line id="line-support"
+                              x1="50" y1="50"
+                              x2="50" y2="93"/>
+
+                    </svg>
+
+
+                    <!-- CENTRO -->
+
+                    <div class="center">
+
+                        <div>
+
+                            <p class="text-[9px] sm:text-[10px] uppercase tracking-[.2em] text-[#c9e4ed]">
+                                tema central
+                            </p>
+
+                            <p class="font-serif text-sm sm:text-xl mt-2 leading-tight">
+                                Drogas<br>
+                                ilícitas
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PONTOS -->
+
+                    <button
+                        class="node"
+                        style="left:50%;top:8%;"
+                        data-id="family"
+                        data-number="01"
+                        data-title="Família"
+                        data-text="Relações familiares podem funcionar como fator de proteção quando existe diálogo, apoio e possibilidade de procurar ajuda. Conflitos familiares também podem fazer parte do contexto de vulnerabilidade de algumas pessoas."
+                    >
+                        <span class="node-number">01</span>
+                        <span>Família</span>
+                    </button>
+
+
+                    <button
+                        class="node"
+                        style="left:87%;top:22%;"
+                        data-id="friends"
+                        data-number="02"
+                        data-title="Amizades"
+                        data-text="O grupo social pode influenciar comportamentos e decisões. Pressão dos colegas, busca por pertencimento e normalização do consumo podem aumentar a exposição a situações de risco."
+                    >
+                        <span class="node-number">02</span>
+                        <span>Amizades</span>
+                    </button>
+
+
+                    <button
+                        class="node"
+                        style="left:91%;top:51%;"
+                        data-id="mental"
+                        data-number="03"
+                        data-title="Saúde mental"
+                        data-text="Questões relacionadas à saúde mental podem coexistir com problemas relacionados ao uso de substâncias. Isso não significa que uma condição cause automaticamente o uso de drogas. Cada situação precisa ser avaliada individualmente."
+                    >
+                        <span class="node-number">03</span>
+                        <span>Saúde mental</span>
+                    </button>
+
+
+                    <button
+                        class="node"
+                        style="left:78%;top:83%;"
+                        data-id="social"
+                        data-number="04"
+                        data-title="Ambiente social"
+                        data-text="As condições do ambiente em que uma pessoa vive podem influenciar sua exposição a riscos, oportunidades de proteção e acesso a serviços de apoio."
+                    >
+                        <span class="node-number">04</span>
+                        <span>Ambiente social</span>
+                    </button>
+
+
+                    <button
+                        class="node"
+                        style="left:22%;top:83%;"
+                        data-id="school"
+                        data-number="05"
+                        data-title="Escola"
+                        data-text="A escola pode ser um espaço de informação, prevenção, convivência e identificação de situações que precisam de atenção. Uma rede escolar de apoio pode facilitar o encaminhamento para ajuda adequada."
+                    >
+                        <span class="node-number">05</span>
+                        <span>Escola</span>
+                    </button>
+
+
+                    <button
+                        class="node"
+                        style="left:9%;top:51%;"
+                        data-id="info"
+                        data-number="06"
+                        data-title="Desinformação"
+                        data-text="Informações falsas ou incompletas podem fazer com que uma pessoa subestime riscos ou tenha dificuldade para reconhecer quando precisa de ajuda. Informação confiável é importante para a prevenção."
+                    >
+                        <span class="node-number">06</span>
+                        <span>Desinformação</span>
+                    </button>
+
+
+                    <button
+                        class="node"
+                        style="left:13%;top:22%;"
+                        data-id="vulnerability"
+                        data-number="07"
+                        data-title="Vulnerabilidade social"
+                        data-text="Desigualdades sociais, violência, falta de acesso a serviços e outras condições podem aumentar a exposição a diferentes riscos. Esses fatores não determinam o comportamento de uma pessoa, mas fazem parte do contexto."
+                    >
+                        <span class="node-number">07</span>
+                        <span>Vulnerabilidade</span>
+                    </button>
+
+
+                    <button
+                        class="node"
+                        style="left:50%;top:93%;"
+                        data-id="support"
+                        data-number="08"
+                        data-title="Rede de apoio"
+                        data-text="Ter pessoas e serviços confiáveis para procurar ajuda pode fazer diferença. Familiares, escola, profissionais de saúde e serviços especializados podem participar dessa rede, dependendo da situação."
+                    >
+                        <span class="node-number">08</span>
+                        <span>Rede de apoio</span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- PAINEL -->
+
+        <section class="max-w-3xl mx-auto px-6 py-10">
+
+            <div
+                id="info-card"
+                class="info-card rounded-xl p-6 sm:p-8"
+            >
+
+                <div class="flex items-start gap-4">
+
+                    <div
+                        id="number"
+                        class="font-serif text-xl text-[#5f8493] w-8"
+                    >
+                        -
+                    </div>
+
+                    <div class="flex-1">
+
+                        <p class="text-[10px] uppercase tracking-[.2em] text-[#6c929f]">
+                            Pista encontrada
+                        </p>
+
+                        <h2
+                            id="title"
+                            class="font-serif text-2xl sm:text-3xl mt-2 text-[#294b59]"
+                        >
+                            Comece sua investigação
+                        </h2>
+
+                        <p
+                            id="description"
+                            class="mt-4 leading-7 text-[#607984]"
+                        >
+                            Escolha qualquer ponto do mapa. Conforme você
+                            explora os fatores, novas pistas serão registradas
+                            abaixo.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PROGRESSO -->
+
+                <div class="mt-7 pt-5 border-t border-[#d7e6eb]">
+
+                    <div class="flex items-center justify-between text-xs">
+
+                        <span class="text-[#6c929f]">
+                            Pistas encontradas
+                        </span>
+
+                        <span
+                            id="counter"
+                            class="font-medium text-[#3d6574]"
+                        >
+                            0 / 8
+                        </span>
+
+                    </div>
+
+                    <div class="mt-3 h-1.5 bg-[#dcebef] rounded-full overflow-hidden">
+
+                        <div
+                            id="progress"
+                            class="h-full bg-[#397d99] rounded-full transition-all duration-300"
+                            style="width:0%"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- QUIZ -->
+
+<section
+    id="quiz"
+    class="hidden max-w-3xl mx-auto px-6 pb-16"
+>
+
+    <div class="paper border border-[#c9dfe7] rounded-xl p-6 sm:p-8">
+
+        <!-- CABEÇALHO DO QUIZ -->
+
+        <div class="flex items-center justify-between gap-4">
+
+            <div>
+                <p class="text-xs uppercase tracking-[.2em] text-[#5f8493]">
+                    Desafio final
+                </p>
+
+                <h2
+                    id="quiz-title"
+                    class="font-serif text-2xl sm:text-3xl mt-2 text-[#294b59]"
+                >
+                    Teste seus conhecimentos
+                </h2>
+            </div>
+
+            <div
+                id="quiz-counter"
+                class="shrink-0 text-sm text-[#5f8493]"
+            >
+                1 / 10
+            </div>
+
+        </div>
+
+
+        <!-- BARRA DE PROGRESSO -->
+
+        <div class="mt-5 h-1.5 bg-[#dcebef] rounded-full overflow-hidden">
+
+            <div
+                id="quiz-progress"
+                class="h-full bg-[#397d99] rounded-full transition-all duration-300"
+                style="width: 10%"
+            ></div>
+
+        </div>
+
+
+        <!-- PERGUNTA -->
+
+        <div class="mt-8">
+
+            <p
+                id="question"
+                class="font-serif text-xl sm:text-2xl leading-8 text-[#294b59]"
+            ></p>
+
+
+            <!-- ALTERNATIVAS -->
+
+            <div
+                id="answers"
+                class="mt-6 space-y-3"
+            ></div>
+
+
+            <!-- FEEDBACK -->
+
+            <div
+                id="quiz-feedback"
+                class="hidden mt-5 p-4 rounded-lg text-sm leading-6"
+            ></div>
+
+
+            <!-- BOTÃO PRÓXIMA -->
+
+            <button
+                id="next-question"
+                class="hidden mt-6 px-5 py-3 rounded-lg bg-[#397d99] text-white text-sm font-medium hover:bg-[#326f89] transition"
+            >
+                Próxima pergunta
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- RESULTADO -->
+
+<section
+    id="result"
+    class="hidden max-w-3xl mx-auto px-6 pb-16"
+>
+
+    <div class="paper border border-[#c9dfe7] rounded-xl p-8 text-center">
+
+        <p class="text-xs uppercase tracking-[.2em] text-[#5f8493]">
+            Investigação concluída
+        </p>
+
+        <h2 class="font-serif text-3xl sm:text-4xl mt-3 text-[#294b59]">
+            Resultado
+        </h2>
+
+        <div
+            id="final-score"
+            class="font-serif text-6xl sm:text-7xl text-[#397d99] mt-8"
+        >
+            0/10
+        </div>
+
+        <p
+            id="final-message"
+            class="mt-5 text-[#607984] leading-7"
+        ></p>
+
+
+        <div class="mt-8 pt-6 border-t border-[#d7e6eb]">
+
+            <p class="text-xs uppercase tracking-[.18em] text-[#6c929f]">
+                Sua pontuação
+            </p>
+
+            <p
+                id="percentage"
+                class="font-serif text-2xl text-[#294b59] mt-2"
+            >
+                0%
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+    </main>
+
+
+    <!-- RODAPÉ -->
+
+    <footer class="border-t border-[#c9dfe7] bg-[#dceff5]">
+
+        <div class="max-w-5xl mx-auto px-6 py-8">
+
+            <p class="text-xs text-[#527887]">
+                Projeto escolar • Influência das drogas ilícitas
+            </p>
+
+            <p class="text-xs text-[#7897a2] mt-2">
+                Conteúdo desenvolvido para fins educativos.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <script>
+
+    /* =========================================
+       MAPA
+    ========================================= */
+
+    const nodes = document.querySelectorAll(".node");
+
+    const title =
+        document.getElementById("title");
+
+    const description =
+        document.getElementById("description");
+
+    const number =
+        document.getElementById("number");
+
+    const counter =
+        document.getElementById("counter");
+
+    const progress =
+        document.getElementById("progress");
+
+    const infoCard =
+        document.getElementById("info-card");
+
+    const quiz =
+        document.getElementById("quiz");
+
+    const result =
+        document.getElementById("result");
+
+    const found =
+        new Set();
+
+
+    nodes.forEach(node => {
+
+        node.addEventListener("click", () => {
+
+            const id =
+                node.dataset.id;
+
+            const line =
+                document.getElementById(
+                    "line-" + id
+                );
+
+
+            /* Remove seleção anterior */
+
+            nodes.forEach(item => {
+                item.classList.remove("active");
+            });
+
+            document
+                .querySelectorAll(".map-lines line")
+                .forEach(item => {
+                    item.classList.remove("active");
+                });
+
+
+            /* Ativa o ponto */
+
+            node.classList.add("active");
+
+            if (line) {
+                line.classList.add("active");
+            }
+
+
+            /* Atualiza o painel */
+
+            number.textContent =
+                node.dataset.number;
+
+            title.textContent =
+                node.dataset.title;
+
+            description.textContent =
+                node.dataset.text;
+
+
+            infoCard.classList.remove("fade");
+
+            void infoCard.offsetWidth;
+
+            infoCard.classList.add("fade");
+
+
+            /* Registra a pista */
+
+            found.add(id);
+
+            const amount =
+                found.size;
+
+
+            counter.textContent =
+                `${amount} / ${nodes.length}`;
+
+            progress.style.width =
+                `${(amount / nodes.length) * 100}%`;
+
+
+            /* Depois das 8 pistas */
+
+            if (
+                amount === nodes.length
+            ) {
+
+                quiz.classList.remove("hidden");
+
+                setTimeout(() => {
+
+                    quiz.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+                }, 300);
+
+                iniciarQuiz();
+
+            }
+
+        });
+
+    });
+
+
+    /* =========================================
+       QUIZ
+    ========================================= */
+
+    const perguntas = [
+
+        {
+            pergunta:
+                "Como a mídia e as redes sociais podem influenciar a percepção das pessoas sobre o consumo de cigarros, cigarros eletrônicos e bebidas alcoólicas?",
+
+            respostas: [
+                "Podem apenas divulgar informações sobre os produtos, sem alterar a forma como o público interpreta seu consumo.",
+                "Podem apresentar o consumo de forma repetida e associá-lo a determinados estilos de vida, contribuindo para sua normalização ou para percepções positivas.",
+                "Podem influenciar somente pessoas que já consumiam esses produtos antes de terem contato com a mídia."
+            ],
+
+            correta: 1
+        },
+
+        {
+            pergunta:
+                "Quais estratégias de publicidade podem tornar o cigarro eletrônico e outros produtos de nicotina mais atraentes para os consumidores?",
+
+            respostas: [
+                "Utilizar elementos visuais, sabores, linguagem e associações com estilos de vida capazes de aumentar o interesse pelo produto.",
+                "Apresentar exclusivamente advertências e informações sobre os possíveis riscos do consumo.",
+                "Evitar referências a preferências pessoais, experiências sociais ou características que possam diferenciar o produto."
+            ],
+
+            correta: 0
+        },
+
+        {
+            pergunta:
+                "Qual pode ser o papel de influenciadores, celebridades e personalidades públicas na normalização do consumo de cigarros eletrônicos e bebidas alcoólicas?",
+
+            respostas: [
+                "Sua presença elimina a influência da publicidade tradicional, fazendo com que o público avalie os produtos apenas por critérios objetivos.",
+                "Sua participação pode tornar o consumo mais visível e familiar, especialmente quando aparece associado à rotina, ao entretenimento ou à imagem pública dessas pessoas.",
+                "Sua influência ocorre apenas quando eles fazem uma propaganda comercial explicitamente identificada."
+            ],
+
+            correta: 1
+        },
+
+        {
+            pergunta:
+                "Como a publicidade pode associar o consumo de determinadas substâncias a ideias de liberdade, popularidade, diversão ou sucesso?",
+
+            respostas: [
+                "Relacionando visualmente o produto a situações, personagens ou estilos de vida que representem essas ideias, mesmo sem afirmar diretamente que o produto causa esses resultados.",
+                "Apresentando essas ideias apenas em textos informativos sobre os riscos do produto.",
+                "Evitando qualquer representação de relações sociais, emoções ou estilos de vida para manter a mensagem exclusivamente comercial."
+            ],
+
+            correta: 0
+        },
+
+        {
+            pergunta:
+                "Por que a publicidade de produtos de tabaco possui restrições diferentes das aplicadas à publicidade de bebidas alcoólicas?",
+
+            respostas: [
+                "Porque os dois produtos são tratados exatamente da mesma maneira pela legislação, mas suas campanhas utilizam formatos diferentes.",
+                "Porque apenas o tabaco possui riscos à saúde reconhecidos, enquanto bebidas alcoólicas não possuem regulamentação específica.",
+                "Porque são produtos sujeitos a históricos, riscos e regras legais específicos, o que resulta em diferenças na regulamentação de sua publicidade."
+            ],
+
+            correta: 2
+        },
+
+        {
+            pergunta:
+                "Quais interesses econômicos estão envolvidos na produção, divulgação e comercialização de bebidas alcoólicas e produtos de nicotina?",
+
+            respostas: [
+                "Os interesses econômicos estão restritos aos fabricantes, pois distribuidores e comerciantes não participam diretamente da geração de receita.",
+                "Existem interesses relacionados à obtenção de receita e lucro ao longo de diferentes etapas da cadeia de produção, divulgação, distribuição e venda.",
+                "Os interesses econômicos aparecem somente quando o consumidor compra diretamente do fabricante."
+            ],
+
+            correta: 1
+        },
+
+        {
+            pergunta:
+                "Quem pode lucrar direta ou indiretamente com o consumo de álcool e cigarros eletrônicos?",
+
+            respostas: [
+                "Somente as empresas que fabricam os produtos, já que os demais participantes apenas prestam serviços sem relação econômica com as vendas.",
+                "Principalmente consumidores e instituições públicas, enquanto fabricantes e comerciantes possuem participação econômica secundária.",
+                "Fabricantes, distribuidores, comerciantes e outros setores envolvidos na cadeia de produção, divulgação e comercialização podem obter receita com esse mercado."
+            ],
+
+            correta: 2
+        },
+
+        {
+            pergunta:
+                "Como a indústria pode influenciar os hábitos de consumo por meio da publicidade, do patrocínio e das redes sociais?",
+
+            respostas: [
+                "Aumentando a visibilidade dos produtos e criando associações com determinados valores, atividades ou estilos de vida, o que pode influenciar a forma como eles são percebidos.",
+                "Atuando apenas sobre consumidores que já decidiram comprar o produto, sem possibilidade de afetar sua percepção anterior.",
+                "Utilizando esses meios principalmente para reduzir a exposição dos produtos e limitar sua presença no cotidiano."
+            ],
+
+            correta: 0
+        },
+
+        {
+            pergunta:
+                "De que maneira a pressão social pode levar uma pessoa a experimentar ou continuar consumindo cigarros eletrônicos, álcool ou outros produtos?",
+
+            respostas: [
+                "A pressão social determina diretamente o comportamento, de modo que a pessoa deixa de ter qualquer possibilidade de escolha.",
+                "A busca por aceitação, pertencimento ou adequação ao grupo pode influenciar decisões de experimentar ou continuar consumindo, embora não determine obrigatoriamente o comportamento.",
+                "A pressão social influencia apenas pessoas que nunca tiveram contato anterior com esses produtos."
+            ],
+
+            correta: 1
+        },
+
+        {
+            pergunta:
+                "Até que ponto as escolhas dos consumidores são individuais quando existe influência da publicidade, da indústria e da pressão social?",
+
+            respostas: [
+                "As escolhas individuais deixam de existir sempre que há influência externa sobre o consumidor.",
+                "A influência externa não possui relevância, pois toda decisão de consumo depende exclusivamente da vontade individual.",
+                "As escolhas individuais continuam existindo, mas são realizadas em um contexto que pode ser influenciado pela publicidade, pela indústria e pelas relações sociais."
+            ],
+
+            correta: 2
+        }
+
+    ];
+
+
+    /* =========================================
+       SISTEMA DE PERSISTÊNCIA
+    ========================================= */
+
+    const SAVE_KEY =
+        "mapa_drogas_quiz_v1";
+
+
+    let estado =
+        JSON.parse(
+            localStorage.getItem(SAVE_KEY)
+        );
+
+
+    if (
+        !estado ||
+        estado.respostas.length !== perguntas.length
+    ) {
+
+        estado = {
+
+            perguntaAtual: 0,
+
+            pontuacao: 0,
+
+            respostas: [],
+
+            concluido: false
+
+        };
+
+        salvarEstado();
+
+    }
+
+
+    function salvarEstado() {
+
+        localStorage.setItem(
+            SAVE_KEY,
+            JSON.stringify(estado)
+        );
+
+    }
+
+
+    /* =========================================
+       ELEMENTOS DO QUIZ
+    ========================================= */
+
+    const question =
+        document.getElementById("question");
+
+    const answers =
+        document.getElementById("answers");
+
+    const quizCounter =
+        document.getElementById("quiz-counter");
+
+    const quizProgress =
+        document.getElementById("quiz-progress");
+
+    const feedback =
+        document.getElementById("quiz-feedback");
+
+    const nextButton =
+        document.getElementById("next-question");
+
+    const finalScore =
+        document.getElementById("final-score");
+
+    const finalMessage =
+        document.getElementById("final-message");
+
+    const percentage =
+        document.getElementById("percentage");
+
+
+    /* =========================================
+       INICIAR QUIZ
+    ========================================= */
+
+    function iniciarQuiz() {
+
+        if (estado.concluido) {
+
+            mostrarResultado();
+
+            return;
+
+        }
+
+
+        mostrarPergunta();
+
+    }
+
+
+    /* =========================================
+       MOSTRAR PERGUNTA
+    ========================================= */
+
+    function mostrarPergunta() {
+
+        const atual =
+            estado.perguntaAtual;
+
+        const pergunta =
+            perguntas[atual];
+
+
+        question.textContent =
+            pergunta.pergunta;
+
+
+        quizCounter.textContent =
+            `${atual + 1} / ${perguntas.length}`;
+
+
+        quizProgress.style.width =
+            `${((atual + 1) / perguntas.length) * 100}%`;
+
+
+        answers.innerHTML = "";
+
+        feedback.className =
+            "hidden";
+
+        feedback.textContent = "";
+
+        nextButton.classList.add("hidden");
+
+
+        pergunta.respostas.forEach(
+            (texto, indice) => {
+
+                const button =
+                    document.createElement("button");
+
+                button.className =
+                    "answer";
+
+                button.textContent =
+                    texto;
+
+
+                button.addEventListener(
+                    "click",
+                    () => responder(indice)
+                );
+
+
+                answers.appendChild(button);
+
+            }
+        );
+
+    }
+
+
+    /* =========================================
+       RESPONDER
+    ========================================= */
+
+    function responder(indice) {
+
+        const atual =
+            estado.perguntaAtual;
+
+        const pergunta =
+            perguntas[atual];
+
+        const botoes =
+            answers.querySelectorAll(".answer");
+
+
+        /* Impede responder duas vezes */
+
+        botoes.forEach(button => {
+            button.disabled = true;
+        });
+
+
+        const acertou =
+            indice === pergunta.correta;
+
+
+        if (acertou) {
+
+            estado.pontuacao++;
+
+            botoes[indice]
+                .classList.add("correct");
+
+
+            feedback.className =
+                "mt-5 p-4 rounded-lg text-sm leading-6 bg-[#e1f0e9] text-[#445c4c]";
+
+            feedback.textContent =
+                "Resposta correta. Essa é uma das interpretações apresentadas pelo mapa.";
+
+        } else {
+
+            botoes[indice]
+                .classList.add("wrong");
+
+            botoes[pergunta.correta]
+                .classList.add("correct");
+
+
+            feedback.className =
+                "mt-5 p-4 rounded-lg text-sm leading-6 bg-[#e8f1f5] text-[#426272]";
+
+            feedback.textContent =
+                "Essa não é a alternativa mais adequada. A resposta destacada em azul representa a interpretação apresentada pelo projeto.";
+
+        }
+
+
+        estado.respostas[atual] =
+            indice;
+
+
+        salvarEstado();
+
+
+        nextButton.textContent =
+            atual === perguntas.length - 1
+                ? "Ver resultado"
+                : "Próxima pergunta";
+
+
+        nextButton.classList.remove("hidden");
+
+    }
+
+
+    /* =========================================
+       PRÓXIMA PERGUNTA
+    ========================================= */
+
+    nextButton.addEventListener(
+        "click",
+        () => {
+
+            if (
+                estado.perguntaAtual
+                === perguntas.length - 1
+            ) {
+
+                estado.concluido = true;
+
+                salvarEstado();
+
+                mostrarResultado();
+
+                return;
+
+            }
+
+
+            estado.perguntaAtual++;
+
+            salvarEstado();
+
+            mostrarPergunta();
+
+        }
+    );
+
+
+    /* =========================================
+       RESULTADO
+    ========================================= */
+
+    function mostrarResultado() {
+
+        quiz.classList.add("hidden");
+
+        result.classList.remove("hidden");
+
+
+        const total =
+            perguntas.length;
+
+        const pontos =
+            estado.pontuacao;
+
+
+        finalScore.textContent =
+            `${pontos}/${total}`;
+
+
+        percentage.textContent =
+            `${Math.round((pontos / total) * 100)}%`;
+
+
+        if (pontos === 10) {
+
+            finalMessage.textContent =
+                "Você acertou todas as perguntas e explorou completamente o conteúdo apresentado.";
+
+        } else if (pontos >= 7) {
+
+            finalMessage.textContent =
+                "Você demonstrou um bom entendimento dos fatores apresentados no projeto.";
+
+        } else if (pontos >= 5) {
+
+            finalMessage.textContent =
+                "Você já compreendeu parte importante do conteúdo. Algumas pistas podem ser interessantes para revisar.";
+
+        } else {
+
+            finalMessage.textContent =
+                "Vale a pena explorar novamente o mapa e observar as relações entre os diferentes fatores.";
+
+        }
+
+
+        setTimeout(() => {
+
+            result.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+        }, 200);
+
+    }
+
+
+    /* =========================================
+       RECUPERAR PROGRESSO AO RECARREGAR
+    ========================================= */
+
+    if (estado.respostas.length > 0) {
+
+        if (estado.concluido) {
+
+            /*
+             * O quiz já terminou.
+             * O resultado será mostrado quando
+             * todas as pistas forem exploradas.
+             */
+
+        }
+
+    }
+
+</script>
+
+</body>
+</html>
